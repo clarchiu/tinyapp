@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/clarchiu/tinyapp/issues"
   },
-  "homepage": "https://github.com/clarchiu/tinyapp#readme"
+  "homepage": "https://github.com/clarchiu/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }

@@ -28,4 +28,11 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, }
   res.render("urls_index", templateVars);
-})
+});
+
+app.get("/urls/:shortURL", (req, res) => {
+  const short = req.params.shortURL;
+  const long = urlDatabase[short];
+  const templateVars = { shortURL: short, longURL: long, };
+  res.render("urls_show", templateVars);
+});

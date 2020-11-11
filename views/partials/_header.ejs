@@ -15,7 +15,11 @@
         <label style="margin: 1em">Logged in as: <%= user.email %>!</label>
         <button type="submit" class="btn btn-outline-secondary">Log Out</button>
       </form>
-    <% } else{ %>  
+    <% } else{ %>
+      <!-- <div class="navbar-nav">
+        <a class="nav-item nav-link" href="/login">Login</a>
+        <a class="nav-item nav-link" href="/register">Register</a>
+      </div>   -->
       <a href="/register" class="btn btn-outline-dark">Register</a>
       <a href="/login" class="btn btn-outline-dark" style="margin: 1em">Login</a>
     <% } %>

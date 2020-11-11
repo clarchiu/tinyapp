@@ -1,16 +1,17 @@
 const express = require("express");
+const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser')
 const app = express();
 const PORT = 8080; // default port 8080
-
-app.set("view engine", "ejs") 
-
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
+
+app.set("view engine", "ejs") 
+app.use(cookieParser())
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -24,29 +25,43 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+app.post("/login", (req, res) => {
+  res.cookie('username', req.body.username);
+  res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, }
+  const templateVars = { 
+    urls: urlDatabase,
+    username: req.cookies["username"],
+  }
   res.render("urls_index", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let short = generateRandomString();
-  urlDatabase[short] = req.body.longURL;  // Log the POST request body to the console
+  let long = req.body.longURL;
+  if (!long.includes('http://')) {
+    long = "http://" + long;
+  }
+  urlDatabase[short] = long;  // Log the POST request body to the console
   res.redirect(`/urls/${short}`);
 })
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+  }
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const short = req.params.shortURL;
-  const long = urlDatabase[short];
-  const templateVars = { shortURL: short, longURL: long, };
+  const templateVars = { 
+    shortURL: short,
+    longURL: urlDatabase[short], 
+    username: req.cookies["username"],
+  };
   res.render("urls_show", templateVars);
 });
 

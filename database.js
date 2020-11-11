@@ -13,7 +13,16 @@ const users = {
     id: "user2RandomID", 
     email: "user2@example.com", 
     password: "dishwasher-funk"
-  }
+  },
 }
 
-module.exports = { urlDatabase, users};
+const checkEmailExists = (email, users) => {
+  for (let id in users) {
+    if (email === users[id].email) {
+      return true;
+    }
+  }
+  return false;
+} 
+
+module.exports = { urlDatabase, users, checkEmailExists };

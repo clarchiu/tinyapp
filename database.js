@@ -16,13 +16,13 @@ const users = {
   },
 }
 
-const checkEmailExists = (email, users) => {
+const getUserWithEmail = (email, users) => {
   for (let id in users) {
     if (email === users[id].email) {
-      return true;
+      return users[id];
     }
   }
-  return false;
+  return null;
 } 
 
-module.exports = { urlDatabase, users, checkEmailExists };
+module.exports = { urlDatabase, users, getUserWithEmail };

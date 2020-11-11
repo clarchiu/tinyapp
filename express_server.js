@@ -1,7 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
-const { urlDatabase, users, checkEmailExists } = require("./database");
+const { urlDatabase, users, getUserWithEmail } = require("./database");
 const { generateRandomString } = require("./generateRandomString");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -74,7 +74,7 @@ app.post("/register", (req, res) => {
     return res.status(400).send("status 400: please enter an email and password");
   }
 
-  if (checkEmailExists(email, users)) {
+  if (getUserWithEmail(email, users)) {
     return res.status(400).send("status 400: email already registered");
   }
 
@@ -85,12 +85,13 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
+  const user = getUserWithEmail(req.body.email, users);
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect("/urls");
 });
 

@@ -25,6 +25,13 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
+app.post("/register", (req, res) => {
+  let uid = generateRandomString();
+  users[uid] = { id: uid, ...req.body}
+  res.cookie('user_id', uid);
+  res.redirect("/urls");
+});
+
 app.post("/login", (req, res) => {
   res.cookie('username', req.body.username);
   res.redirect("/urls");

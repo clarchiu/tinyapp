@@ -86,7 +86,13 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
   const user = getUserWithEmail(req.body.email, users);
-  res.cookie('user_id', user.id);
+  if (!user) {
+    return res.status(403).send("status 403: no user with that email found");
+  }
+  if (req.body.password !== user.password) {
+    return res.status(403).send("status 403: authentication failed");
+  }
+  res.cookie('user_id', user.id)
   res.redirect("/urls");
 });
 

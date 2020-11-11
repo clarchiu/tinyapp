@@ -9,8 +9,8 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.set("view engine", "ejs") 
-app.use(cookieParser())
+app.set("view engine", "ejs");
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.get("/", (req, res) => {
@@ -23,6 +23,10 @@ app.listen(PORT, () => {
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
+});
+
+app.get("/register", (req, res) => {
+  res.render("register");
 });
 
 app.post("/login", (req, res) => {

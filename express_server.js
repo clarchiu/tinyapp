@@ -35,12 +35,12 @@ app.get("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const loginCookie = getUserLoginCookie(req);
+  if (!loginCookie) {
+    return res.render("no_access");
+  }
   const templateVars = { 
     urls: getUrlsForUser(loginCookie),
     user: users[loginCookie],
-  }
-  if (!loginCookie) {
-    return res.render("no_access", templateVars)
   }
   res.render("urls_index", templateVars);
 });
@@ -57,11 +57,15 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  const loginCookie = getUserLoginCookie(req);
   const short = req.params.shortURL;
+  if (!loginCookie || urlDatabase[short].uid !== loginCookie) {
+    return res.render("no_access");
+  }
   const templateVars = { 
     shortURL: short,
     longURL: urlDatabase[short].longURL,
-    user: users[getUserLoginCookie(req)],
+    user: users[loginCookie],
   };
   res.render("urls_show", templateVars);
 });

@@ -26,21 +26,27 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (getUserLoginCookie(req)) {
+    return res.redirect("/urls");
+  }
   res.render("register");
 });
 
 app.get("/login", (req, res) => {
+  if (getUserLoginCookie(req)) {
+    return res.redirect("/urls");
+  }
   res.render("login");
 });
 
 app.get("/urls", (req, res) => {
   const loginCookie = getUserLoginCookie(req);
-  if (!loginCookie) {
-    return res.render("no_access");
-  }
-  const templateVars = { 
+  const templateVars = {
     urls: getUrlsForUser(loginCookie),
     user: users[loginCookie],
+  };
+  if (!loginCookie) {
+    return res.render("no_access", templateVars);
   }
   res.render("urls_index", templateVars);
 });
@@ -50,23 +56,23 @@ app.get("/urls/new", (req, res) => {
   if (!loginCookie) {
     return res.redirect("/login");
   }
-  const templateVars = { 
+  const templateVars = {
     user: users[loginCookie],
-  }
+  };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   const loginCookie = getUserLoginCookie(req);
   const short = req.params.shortURL;
-  if (!loginCookie || urlDatabase[short].uid !== loginCookie) {
-    return res.render("no_access");
-  }
-  const templateVars = { 
+  const templateVars = {
     shortURL: short,
     longURL: urlDatabase[short].longURL,
     user: users[loginCookie],
   };
+  if (!loginCookie || urlDatabase[short].uid !== loginCookie) {
+    return res.render("no_access", templateVars);
+  }
   res.render("urls_show", templateVars);
 });
 
@@ -103,7 +109,7 @@ app.post("/login", (req, res) => {
   if (req.body.password !== user.password) {
     return res.status(403).send("status 403: authentication failed");
   }
-  res.cookie('user_id', user.id)
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
@@ -116,22 +122,29 @@ app.post("/urls", (req, res) => {
   const short = generateRandomString();
   const longURL = appendHttpToURL(req.body.longURL);
   urlDatabase[short] = {
-    longURL,  
+    longURL,
     uid: getUserLoginCookie(req),
-  }
+  };
   console.log(urlDatabase);
   res.redirect(`/urls/${short}`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
   const short = req.params.shortURL;
-  const longURL = appendHttpToURL(req.body.longURL);
-  urlDatabase[short].longURL = longURL; 
+  const url = urlDatabase[short];
+  if (url && url.uid === getUserLoginCookie(req)) {
+    const longURL = appendHttpToURL(req.body.longURL);
+    url.longURL = longURL;
+  }
   res.redirect(`/urls/${short}`);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const short = req.params.shortURL;
+  const url = urlDatabase[short];
+  if (!url || url.uid !== getUserLoginCookie(req)) {
+    return res.redirect(`/urls/${short}`);
+  }
   delete urlDatabase[short];
   res.redirect("/urls");
 });

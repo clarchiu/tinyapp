@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 // --- GET ROUTES ---
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -36,8 +36,11 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   const loginCookie = getUserLoginCookie(req);
   const templateVars = { 
-    urls: urlDatabase,
+    urls: getUrlsForUser(loginCookie),
     user: users[loginCookie],
+  }
+  if (!loginCookie) {
+    return res.render("no_access", templateVars)
   }
   res.render("urls_index", templateVars);
 });

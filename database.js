@@ -23,12 +23,22 @@ const users = {
 }
 
 const getUserWithEmail = (email, users) => {
-  for (let id in users) {
-    if (email === users[id].email) {
-      return users[id];
+  for (const [_, user] of Object.entries(users)) {
+    if (email === user.email) {
+      return user;
     }
   }
   return null;
 } 
 
-module.exports = { urlDatabase, users, getUserWithEmail };
+const getUrlsForUser = (uid) => {
+  let toReturn = {};
+  for (const [short, url] of Object.entries(urlDatabase)) {
+    if (uid === url.uid) {
+      toReturn[short] = url;
+    }
+  }
+  return toReturn;
+}
+
+module.exports = { urlDatabase, users, getUserWithEmail, getUrlsForUser };

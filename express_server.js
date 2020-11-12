@@ -1,18 +1,17 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
 const { urlDatabase, users, getUserWithEmail } = require("./database");
 const { generateRandomString } = require("./generateRandomString");
-const app = express();
 const PORT = 8080; // default port 8080
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+const app = express();
+app.set("view engine", "ejs");
 
 // --- MIDDLEWARE ---
 
-app.set("view engine", "ejs");
+app.use(morgan('dev'));
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -56,14 +55,14 @@ app.get("/urls/:shortURL", (req, res) => {
   const short = req.params.shortURL;
   const templateVars = { 
     shortURL: short,
-    longURL: urlDatabase[short],
+    longURL: urlDatabase[short].longURL,
     user: users[req.cookies["user_id"]],
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -106,21 +105,25 @@ app.post("/logout", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const short = generateRandomString();
-  let long = req.body.longURL;
-  if (!long.includes('http://')) {
-    long = "http://" + long;
+  let longURL = req.body.longURL;
+  if (!longURL.includes('http://')) {
+    longURL = "http://" + longURL;
   }
-  urlDatabase[short] = long;  // Log the POST request body to the console
+  urlDatabase[short] = {
+    longURL,  // Log the POST request body to the console
+    uid: req.cookies["user_id"],
+  }
+  console.log(urlDatabase);
   res.redirect(`/urls/${short}`);
 });
 
 app.post("/urls/:shortURL", (req, res) => {
   const short = req.params.shortURL;
-  let long = req.body.longURL;
-  if (!long.includes('http://')) {
-    long = "http://" + long;
+  let longURL = req.body.longURL;
+  if (!longURL.includes('http://')) {
+    longURL = "http://" + longURL;
   }
-  urlDatabase[short] = long;  // Log the POST request body to the console
+  urlDatabase[short].longURL = longURL;  // Log the POST request body to the console
   res.redirect(`/urls/${short}`);
 });
 
@@ -130,4 +133,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});

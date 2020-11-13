@@ -1,7 +1,6 @@
 const getUserLoginCookie = (request) => {
-  return request.cookies["user_id"];
+  return request.session.user_id;
 };
-exports.getUserLoginCookie = getUserLoginCookie;
 
 const appendHttpToURL = (url) => {
   if (!url.includes('http://')) {
@@ -9,7 +8,6 @@ const appendHttpToURL = (url) => {
   }
   return url;
 };
-exports.appendHttpToURL = appendHttpToURL;
 
 function generateRandomString() {
   let randomString = '';
@@ -19,4 +17,5 @@ function generateRandomString() {
   }
   return randomString;
 }
-exports.generateRandomString = generateRandomString;
+
+module.exports = { getUserLoginCookie, appendHttpToURL, generateRandomString };

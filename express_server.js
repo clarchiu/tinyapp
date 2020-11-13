@@ -1,6 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
 const { urlDatabase, users, getUserWithEmail, getUrlsForUser } = require("./database");
@@ -11,13 +11,14 @@ const app = express();
 app.set("view engine", "ejs");
 
 // --- MIDDLEWARE ---
-
 app.use(morgan('dev'));
-app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieSession({
+  name: 'session',
+  keys: ['abc', 'def'],
+}));
 
 // --- GET ROUTES ---
-
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
@@ -79,7 +80,6 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 // --- POST ROUTES ---
-
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = bcrypt.hashSync(req.body.password, 10);
@@ -95,7 +95,7 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   users[id] = { id, email, password };
   console.log(users);
-  res.cookie('user_id', id);
+  req.session.user_id = id;
   res.redirect("/urls");
 });
 
@@ -104,15 +104,15 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.status(403).send("status 403: no user with that email found");
   }
-  if (bcrypt.compareSync(req.body.password, user.password)) {
+  if (!bcrypt.compareSync(req.body.password, user.password)) {
     return res.status(403).send("status 403: authentication failed");
   }
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect("/urls");
 });
 

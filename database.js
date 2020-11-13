@@ -22,7 +22,7 @@ const users = {
   },
 }
 
-const getUserWithEmail = (email, users) => {
+const getUserByEmail = (email, users) => {
   for (const [_, user] of Object.entries(users)) {
     if (email === user.email) {
       return user;
@@ -41,4 +41,4 @@ const getUrlsForUser = (uid) => {
   return toReturn;
 }
 
-module.exports = { urlDatabase, users, getUserWithEmail, getUrlsForUser };
+module.exports = { urlDatabase, users, getUserByEmail, getUrlsForUser };

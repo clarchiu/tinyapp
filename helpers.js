@@ -1,6 +1,10 @@
-const getUserLoginCookie = (request) => {
+const getUserIdFromCookie = (request) => {
   return request.session.user_id;
 };
+
+const checkUserOwnsURL = (uid, url) => {
+  return url && url.uid === uid;
+}
 
 const appendHttpToURL = (url) => {
   if (!url.includes('http://')) {
@@ -9,7 +13,7 @@ const appendHttpToURL = (url) => {
   return url;
 };
 
-function generateRandomString() {
+const generateRandomString = () => {
   let randomString = '';
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i < 6; i++) {
@@ -18,4 +22,9 @@ function generateRandomString() {
   return randomString;
 }
 
-module.exports = { getUserLoginCookie, appendHttpToURL, generateRandomString };
+module.exports = { 
+  getUserIdFromCookie, 
+  checkUserOwnsURL, 
+  appendHttpToURL, 
+  generateRandomString
+};

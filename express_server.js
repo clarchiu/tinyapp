@@ -19,6 +19,12 @@ app.use(cookieSession({
 }));
 
 // --- COMMON PATTERNS REFACTORED OUT ---
+/**
+ * Calls onFalse or onTrue depending on if user is logged in
+ * @param {*} req 
+ * @param {*} onFalse 
+ * @param {*} onTrue 
+ */
 const executeIfLoggedIn = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req)
   if (!uid) {
@@ -28,16 +34,23 @@ const executeIfLoggedIn = (req, onFalse, onTrue) => {
   onTrue(uid);
 }
 
-const executeIfUserOwnsURL = (req, res, onTrue) => {
+/**
+ * Calls onFalse or onTrue depending on if user owns the url from req
+ * @param {*} req 
+ * @param {*} onFalse 
+ * @param {*} onTrue 
+ */
+const executeIfUserOwnsURL = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
-  const short = req.params.shortURL;
-  const url = urlDatabase[short];
+  const user = users[uid];
+  const shortURL = req.params.shortURL;
+  const url = urlDatabase[shortURL];
 
-  if (checkUserOwnsURL(uid, url)) {
-    onTrue(short, url, uid);
-  } else {
-    res.redirect(`/urls/${short}`);
-  }
+  if (!checkUserOwnsURL(uid, url)) {
+    onFalse(shortURL, url, uid, user)
+    return;
+  } 
+  onTrue(shortURL, url, uid, user);
 }
 
 // --- GET ROUTES ---
@@ -63,9 +76,9 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   executeIfLoggedIn(req,
     () => res.render("no_access", { user: null }), //not logged in
-    (uid) => { //logged in
+    (uid) => {                                     //logged in
       const templateVars = {
-        urls: getUrlsForUser(uid),
+        urls: getUrlsForUser(uid, urlDatabase),
         user: users[uid],
       };
       res.render("urls_index", templateVars);
@@ -79,30 +92,25 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const uid = getUserIdFromCookie(req);
-  const user = users[uid];
-  const shortURL = req.params.shortURL;
-  const url = urlDatabase[shortURL];
-  
-  if (!uid || !checkUserOwnsURL(uid, url)) {
-    return res.render("no_access", { user });
-  }
-  const templateVars = { 
-    user,
-    shortURL, 
-    longURL: url.longURL, 
-  };
-  res.render("urls_show", templateVars);
+  executeIfUserOwnsURL(req, 
+    (_, __, _0, user) => res.render("no_access", { user }), //does not own url
+    (shortURL, url, _, user) => {                           //owns url
+      const templateVars = { 
+        user,
+        shortURL, 
+        longURL: url.longURL, 
+      };
+      res.render("urls_show", templateVars);
+    });
 });
 
 app.get("/u/:shortURL", (req, res) => {
   const url = urlDatabase[req.params.shortURL]
 
   if (!url) { // (MINOR) return html instead
-    return res.status(404).send("status 404: short url does not exist");
+    return res.status(404).send("status 404: shortURL url does not exist");
   }
-  const longURL = url.longURL;
-  res.redirect(longURL);
+  res.redirect(url.longURL);
 });
 
 // --- POST ROUTES ---
@@ -117,7 +125,11 @@ app.post("/register", (req, res) => {
     return res.status(400).send("status 400: email already registered");
   }
   const id = generateRandomString();
-  users[id] = { id, email, password: bcrypt.hashSync(password, 10) };
+  users[id] = { 
+    id, 
+    email, 
+    password: bcrypt.hashSync(password, 10) 
+  };
   req.session.user_id = id;
   res.redirect("/urls");
 });
@@ -140,26 +152,30 @@ app.post("/logout", (req, res) => {
 app.post("/urls", (req, res) => {
   executeIfLoggedIn(req,
     () => res.redirect('/urls'), //not logged in
-    (uid) => { //logged in
-      const short = generateRandomString();
+    (uid) => {                   //logged in
+      const shortURL = generateRandomString();
       const longURL = appendHttpToURL(req.body.longURL);
-      urlDatabase[short] = { longURL, uid };
-      res.redirect(`/urls/${short}`);
+      urlDatabase[shortURL] = { longURL, uid };
+      res.redirect(`/urls/${shortURL}`);
     });
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  executeIfUserOwnsURL(req, res, (short, url) => {
-    url.longURL = appendHttpToURL(req.body.longURL);
-    res.redirect(`/urls/${short}`);
-  });
+  executeIfUserOwnsURL(req, 
+    (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
+    (shortURL, url) => {                             //owns url
+      url.longURL = appendHttpToURL(req.body.longURL);
+      res.redirect(`/urls/${shortURL}`);
+    });
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  executeIfUserOwnsURL(req, res, (short) => {
-    delete urlDatabase[short];
-    res.redirect("/urls");
-  })
+  executeIfUserOwnsURL(req, 
+    (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
+    (shortURL) => {                                  //owns url
+      delete urlDatabase[shortURL];
+      res.redirect("/urls");
+    });
 });
 
 app.listen(PORT, () => {

@@ -2,10 +2,11 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const bcrypt = require('bcrypt');
 const { urlDatabase, users, getUserWithEmail, getUrlsForUser } = require("./database");
 const { generateRandomString, getUserLoginCookie, appendHttpToURL } = require("./helpers");
-const PORT = 8080; // default port 8080
 
+const PORT = 8080; // default port 8080
 const app = express();
 app.set("view engine", "ejs");
 
@@ -19,10 +20,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
 });
 
 app.get("/register", (req, res) => {
@@ -85,7 +82,7 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);
 
   if (!email || !password) {
     return res.status(400).send("status 400: please enter an email and password");
@@ -97,6 +94,7 @@ app.post("/register", (req, res) => {
 
   const id = generateRandomString();
   users[id] = { id, email, password };
+  console.log(users);
   res.cookie('user_id', id);
   res.redirect("/urls");
 });
@@ -106,7 +104,7 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.status(403).send("status 403: no user with that email found");
   }
-  if (req.body.password !== user.password) {
+  if (bcrypt.compareSync(req.body.password, user.password)) {
     return res.status(403).send("status 403: authentication failed");
   }
   res.cookie('user_id', user.id);

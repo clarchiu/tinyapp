@@ -1,21 +1,4 @@
 /**
- * Returns the session cookie from the request object
- * @param {*} request 
- */
-const getUserIdFromCookie = (request) => {
-  return request.session.user_id;
-};
-
-/**
- * Returns true if the user with uid is the owner of url
- * @param {*} uid 
- * @param {*} url 
- */
-const checkUserOwnsURL = (uid, url) => {
-  return url && url.uid === uid;
-}
-
-/**
  * Prepends the 'http://' protocol to url if it doesn't already start with it
  * @param {*} url 
  */
@@ -42,7 +25,6 @@ const generateRandomString = () => {
 
 module.exports = { 
   getUserIdFromCookie, 
-  checkUserOwnsURL, 
   appendHttpToURL, 
   generateRandomString
 };

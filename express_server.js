@@ -1,10 +1,10 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const cookieSession = require('cookie-session')
 const morgan = require('morgan');
+const bodyParser = require("body-parser");
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const { generateRandomString, appendHttpToURL } = require("./helpers");
 const { urlDatabase, users, getUserByEmail, getUrlsForUser } = require("./database");
-const { generateRandomString, getUserIdFromCookie, checkUserOwnsURL, appendHttpToURL } = require("./helpers");
 
 const PORT = 8080; // default port 8080
 const app = express();
@@ -21,60 +21,68 @@ app.use(cookieSession({
 // --- COMMON PATTERNS REFACTORED OUT ---
 /**
  * Calls onFalse or onTrue depending on if user is logged in
- * @param {*} req 
- * @param {*} onFalse 
- * @param {*} onTrue 
+ * @param {*} req
+ * @param {*} onFalse
+ * @param {*} onTrue
  */
-const executeIfLoggedIn = (req, onFalse, onTrue) => {
-  const uid = getUserIdFromCookie(req)
+const checkUserLoggedIn = (req, onFalse, onTrue) => {
+  const uid = getUserIdFromCookie(req);
   if (!uid) {
     onFalse(uid);
     return;
   }
   onTrue(uid);
-}
+};
 
 /**
  * Calls onFalse or onTrue depending on if user owns the url from req
- * @param {*} req 
- * @param {*} onFalse 
- * @param {*} onTrue 
+ * @param {*} req
+ * @param {*} onFalse
+ * @param {*} onTrue
  */
-const executeIfUserOwnsURL = (req, onFalse, onTrue) => {
+const checkUserOwnsURL = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
   const user = users[uid];
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
 
-  if (!checkUserOwnsURL(uid, url)) {
-    onFalse(shortURL, url, uid, user)
+  if (!url || url.uid !== uid) {
+    onFalse(shortURL, url, uid, user);
     return;
-  } 
+  }
   onTrue(shortURL, url, uid, user);
-}
+};
+
+/**
+ * Returns the session cookie from the request object
+ * @param {*} request 
+ */
+const getUserIdFromCookie = (request) => {
+  return request.session.userId;
+};
 
 // --- GET ROUTES ---
 app.get("/", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.redirect("/login"), //not logged in
     () => res.redirect("/urls")); //logged in
 });
 
 app.get("/register", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.render("register"), //not logged in
     () => res.redirect("/urls")); //logged in
 });
 
 app.get("/login", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.render("login"), //not logged in
     () => res.redirect("/urls")); //logged in
 });
 
 // (STRETCH) the date created, number of visits, number of unique visits
 app.get("/urls", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.render("no_access", { user: null }), //not logged in
     (uid) => {                                     //logged in
       const templateVars = {
@@ -86,26 +94,26 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.redirect("/login"), //not logged in
     (uid) => res.render("urls_new", { user: users[uid] })); //logged in
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  executeIfUserOwnsURL(req, 
+  checkUserOwnsURL(req,
     (_, __, _0, user) => res.render("no_access", { user }), //does not own url
     (shortURL, url, _, user) => {                           //owns url
-      const templateVars = { 
+      const templateVars = {
         user,
-        shortURL, 
-        longURL: url.longURL, 
+        shortURL,
+        longURL: url.longURL,
       };
       res.render("urls_show", templateVars);
     });
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const url = urlDatabase[req.params.shortURL]
+  const url = urlDatabase[req.params.shortURL];
 
   if (!url) { // (MINOR) return html instead
     return res.status(404).send("status 404: shortURL url does not exist");
@@ -118,29 +126,29 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
-  if (!email || !password) {
+  if (!email || !password) { // (MINOR) return html instead
     return res.status(400).send("status 400: please enter an email and password");
   }
-  if (getUserByEmail(email, users)) {
+  if (getUserByEmail(email, users)) { // (MINOR) return html instead
     return res.status(400).send("status 400: email already registered");
   }
   const id = generateRandomString();
-  users[id] = { 
-    id, 
-    email, 
-    password: bcrypt.hashSync(password, 10) 
+  users[id] = {
+    id,
+    email,
+    password: bcrypt.hashSync(password, 10)
   };
-  req.session.user_id = id;
+  req.session.userId = id;
   res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email, users);
-
-  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+  
+  if (!user || !bcrypt.compareSync(req.body.password, user.password)) { // (MINOR) return html instead
     return res.status(403).send("status 403: authentication failed");
   }
-  req.session.user_id = user.id;
+  req.session.userId = user.id;
   res.redirect("/urls");
 });
 
@@ -150,7 +158,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  executeIfLoggedIn(req,
+  checkUserLoggedIn(req,
     () => res.redirect('/urls'), //not logged in
     (uid) => {                   //logged in
       const shortURL = generateRandomString();
@@ -161,7 +169,7 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  executeIfUserOwnsURL(req, 
+  checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
     (shortURL, url) => {                             //owns url
       url.longURL = appendHttpToURL(req.body.longURL);
@@ -170,7 +178,7 @@ app.post("/urls/:shortURL", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  executeIfUserOwnsURL(req, 
+  checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
     (shortURL) => {                                  //owns url
       delete urlDatabase[shortURL];

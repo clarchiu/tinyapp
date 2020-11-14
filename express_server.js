@@ -37,10 +37,10 @@ const checkUserLoggedIn = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
   const user = users[uid];
   if (!uid || !user) {
-    onFalse(uid);
+    onFalse(uid, user);
     return;
   }
-  onTrue(uid);
+  onTrue(uid, user);
 };
 
 /**
@@ -85,10 +85,10 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   checkUserLoggedIn(req,
     () => res.render("no_access", { user: null }), //not logged in
-    (uid) => {                                     //logged in
+    (uid, user) => {                                     //logged in
       const templateVars = {
+        user,
         urls: getUrlsForUser(uid, urlDatabase),
-        user: users[uid],
       };
       res.render("urls_index", templateVars);
     });
@@ -97,7 +97,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   checkUserLoggedIn(req,
     () => res.redirect("/login"), //not logged in
-    (uid) => res.render("urls_new", { user: users[uid] })); //logged in
+    (_, user) => res.render("urls_new", { user })); //logged in
 });
 
 app.get("/urls/:shortURL", (req, res) => {

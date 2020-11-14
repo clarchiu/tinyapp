@@ -27,8 +27,8 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 I'm someone who's a bit (too) obsessed with refactoring and couldn't get over how messy each route handler was getting initially. The refactoring process for this project was actually really rewarding because I was able to practice and appreciate functional programming even more. I want to share with you what I came up with to DRY up my code. There were basically two patterns (both has to do with authentication) that were repeat WET offenders:
 
-1.if user is logged in then do something, else do another thing
-2.if user owns url then do something, else do another thing
+1. if user is logged in then do something, else do another thing
+2. if user owns url then do something, else do another thing
 
 After some mind wrestling, I figured out that I could just refactor out these patterns into helper functions that take two callbacks (one for when the condition is true and one for false). The helper for the first pattern looked like this:
 

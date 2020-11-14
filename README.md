@@ -57,4 +57,4 @@ A benefit of handling `onFalse` first is that typically the code for when authen
 
 I originally tried writing custom middleware to handle authentication at first because I read it is THE standard practice for real websites. But our project deliverables were kinda weird in the way that they asked us to handle authentication differently depending on where the user was currently at. This would involve different functions for EACH scenario, which would quickly become an anti-pattern. 
 
-If you made it this far, thanks for reading my long spiel.
+If you made it this far, thanks for reading my long spiel. :D

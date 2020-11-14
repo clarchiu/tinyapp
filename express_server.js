@@ -21,7 +21,7 @@ app.use(cookieSession({
 // --- COMMON PATTERNS REFACTORED OUT ---
 /**
  * Returns the session cookie from the request object
- * @param {*} req 
+ * @param {*} req request object
  */
 const getUserIdFromCookie = (req) => {
   return req.session.userId;
@@ -29,9 +29,9 @@ const getUserIdFromCookie = (req) => {
 
 /**
  * Calls onFalse or onTrue depending on if user is logged in
- * @param {*} req
- * @param {*} onFalse
- * @param {*} onTrue
+ * @param {*} req     request object
+ * @param {*} onFalse callback to execute if user is not logged in
+ * @param {*} onTrue  callback to execute if user is logged in
  */
 const checkUserLoggedIn = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
@@ -45,9 +45,9 @@ const checkUserLoggedIn = (req, onFalse, onTrue) => {
 
 /**
  * Calls onFalse or onTrue depending on if user owns the url from req
- * @param {*} req
- * @param {*} onFalse
- * @param {*} onTrue
+ * @param {*} req     request object
+ * @param {*} onFalse callback to execute if user does not own URL
+ * @param {*} onTrue  callback to execute if user owns URL
  */
 const checkUserOwnsURL = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);

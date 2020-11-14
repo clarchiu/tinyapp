@@ -38,7 +38,8 @@ const getUserByEmail = (email, users) => {
 
 /**
  * Returns the urls that the user created
- * @param {*} uid 
+ * @param {*} uid user ID
+ * @param {*} db  the url database to search
  */
 const getUrlsForUser = (uid, db) => {
   let toReturn = {};

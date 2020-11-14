@@ -12,7 +12,7 @@ const appendHttpToURL = (url) => {
 };
 
 /**
- * Generates a random string of 6 characters
+ * Returns a random string of 6 characters
  */
 const generateRandomString = () => {
   let randomString = '';

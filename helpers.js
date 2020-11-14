@@ -24,7 +24,6 @@ const generateRandomString = () => {
 }
 
 module.exports = { 
-  getUserIdFromCookie, 
   appendHttpToURL, 
   generateRandomString
 };

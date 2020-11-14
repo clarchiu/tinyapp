@@ -20,6 +20,14 @@ app.use(cookieSession({
 
 // --- COMMON PATTERNS REFACTORED OUT ---
 /**
+ * Returns the session cookie from the request object
+ * @param {*} req 
+ */
+const getUserIdFromCookie = (req) => {
+  return req.session.userId;
+};
+
+/**
  * Calls onFalse or onTrue depending on if user is logged in
  * @param {*} req
  * @param {*} onFalse
@@ -27,7 +35,8 @@ app.use(cookieSession({
  */
 const checkUserLoggedIn = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
-  if (!uid) {
+  const user = users[uid];
+  if (!uid || !user) {
     onFalse(uid);
     return;
   }
@@ -46,19 +55,11 @@ const checkUserOwnsURL = (req, onFalse, onTrue) => {
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
 
-  if (!url || url.uid !== uid) {
+  if (!uid || !user || !url || url.uid !== uid) {
     onFalse(shortURL, url, uid, user);
     return;
   }
   onTrue(shortURL, url, uid, user);
-};
-
-/**
- * Returns the session cookie from the request object
- * @param {*} request 
- */
-const getUserIdFromCookie = (request) => {
-  return request.session.userId;
 };
 
 // --- GET ROUTES ---

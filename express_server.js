@@ -3,7 +3,7 @@ const morgan = require('morgan');
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const { generateRandomString, appendHttpToURL } = require("./helpers");
+const { generateRandomString, prependHttpToURL } = require("./helpers");
 const { urlDatabase, users, getUserByEmail, getUrlsForUser } = require("./database");
 
 const PORT = 8080; // default port 8080
@@ -85,7 +85,7 @@ app.get("/login", (req, res) => {
 app.get("/urls", (req, res) => {
   checkUserLoggedIn(req,
     () => res.render("no_access", { user }), //not logged in
-    (uid, user) => {                                     //logged in
+    (uid, user) => {                         //logged in
       const templateVars = {
         user,
         urls: getUrlsForUser(uid, urlDatabase),
@@ -139,7 +139,7 @@ app.post("/register", (req, res) => {
     email,
     password: bcrypt.hashSync(password, 10)
   };
-  req.session.userId = id;
+  req.session.userId = id;  // set session cookie
   res.redirect("/urls");
 });
 
@@ -149,7 +149,7 @@ app.post("/login", (req, res) => {
   if (!user || !bcrypt.compareSync(req.body.password, user.password)) { // (MINOR) return html instead
     return res.status(403).send("status 403: authentication failed");
   }
-  req.session.userId = user.id;
+  req.session.userId = user.id; // set session cookie
   res.redirect("/urls");
 });
 
@@ -163,7 +163,7 @@ app.post("/urls", (req, res) => {
     () => res.redirect('/urls'), //not logged in
     (uid) => {                   //logged in
       const shortURL = generateRandomString();
-      const longURL = appendHttpToURL(req.body.longURL);
+      const longURL = prependHttpToURL(req.body.longURL);
       urlDatabase[shortURL] = { longURL, uid };
       res.redirect(`/urls/${shortURL}`);
     });
@@ -173,7 +173,7 @@ app.post("/urls/:shortURL", (req, res) => {
   checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
     (shortURL, url) => {                             //owns url
-      url.longURL = appendHttpToURL(req.body.longURL);
+      url.longURL = prependHttpToURL(req.body.longURL);
       res.redirect(`/urls/${shortURL}`);
     });
 });

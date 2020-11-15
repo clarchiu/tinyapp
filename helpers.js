@@ -2,7 +2,7 @@
  * Prepends the 'http://' protocol to url if it doesn't already start with it
  * @param {*} url 
  */
-const appendHttpToURL = (url) => {
+const prependHttpToURL = (url) => {
   const protocol = 'http://';
   if (url.substr(0, protocol.length).toLowerCase() !== protocol)
   {
@@ -24,6 +24,6 @@ const generateRandomString = () => {
 }
 
 module.exports = { 
-  appendHttpToURL, 
+  prependHttpToURL, 
   generateRandomString
 };

@@ -40,6 +40,9 @@ const userDatabase = {
    * @param {*} password 
    */
   createNewUser: function(email, password) {
+    if (this.getUserByEmail(email)) {
+      throw new Error("email already registered");
+    }
     const id = generateRandomString();
     this.users[id] = {
       id,

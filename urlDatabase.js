@@ -3,10 +3,12 @@ const { generateRandomString, prependHttpToURL } = require("./helpers");
 const urlDatabase = {
   urls: {
     "b2xVn2": {
+      shortURL: "b2xVn2",
       longURL: "http://www.lighthouselabs.ca",
       uid: "userRandomID"
     },
     "9sm5xK": {
+      shortURL: "9sm5xK",
       longURL: "http://www.google.com",
       uid: "user2RandomID"    
     },
@@ -27,7 +29,7 @@ const urlDatabase = {
   createNewURL: function(uid, newURL) {
     const shortURL = generateRandomString();
     const longURL = prependHttpToURL(newURL);
-    this.urls[shortURL] = { longURL, uid };
+    this.urls[shortURL] = { shortURL, longURL, uid };
     return shortURL;
   },
   /**

@@ -123,12 +123,13 @@ app.post("/register", (req, res) => {
   if (!email || !password) { // (MINOR) return html instead
     return res.status(400).send("status 400: please enter an email and password");
   }
-  if (userDB.getUserByEmail(email)) { // (MINOR) return html instead
+  try {
+    const id = userDB.createNewUser(email, bcrypt.hashSync(password, 10));
+    req.session.userId = id;  // set session cookie
+    res.redirect("/urls");
+  } catch (error) {
     return res.status(400).send("status 400: email already registered");
   }
-  const id = userDB.createNewUser(email, bcrypt.hashSync(password, 10));
-  req.session.userId = id;  // set session cookie
-  res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
@@ -158,8 +159,8 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
-    (shortURL) => {    
-      urlDB.editURL(shortURL, req.body.longURL);                        //owns url
+    (shortURL) => {    //owns url
+      urlDB.editURL(shortURL, req.body.longURL);                        
       res.redirect(`/urls/${shortURL}`);
     });
 });

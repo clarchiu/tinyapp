@@ -3,10 +3,13 @@
  * @param {*} url 
  */
 const prependHttpToURL = (url) => {
-  const protocol = 'http://';
-  if (url.substr(0, protocol.length).toLowerCase() !== protocol)
+  const httpPrefix = 'http://';
+  const httpsPrefix = 'https://';
+  if (
+    url.substr(0, httpPrefix.length).toLowerCase() !== httpPrefix
+    || url.substr(0, httpsPrefix.length).toLowerCase() !== httpsPrefix)
   {
-    return protocol + url;
+    return httpPrefix + url;
   }
   return url;
 };

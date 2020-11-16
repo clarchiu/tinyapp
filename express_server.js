@@ -3,8 +3,8 @@ const morgan = require('morgan');
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const urlDatabase = require("./urlDatabase");
-const userDatabase = require("./userDatabase");
+const urlDB = require("./urlDatabase");
+const userDB = require("./userDatabase");
 
 const PORT = 8080; // default port 8080
 const app = express();
@@ -35,7 +35,7 @@ const getUserIdFromCookie = (req) => {
  */
 const checkUserLoggedIn = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
-  const user = userDatabase.getUserById(uid);
+  const user = userDB.getUserById(uid);
   if (!uid || !user) {
     onFalse(uid, user);
     return;
@@ -51,15 +51,15 @@ const checkUserLoggedIn = (req, onFalse, onTrue) => {
  */
 const checkUserOwnsURL = (req, onFalse, onTrue) => {
   const uid = getUserIdFromCookie(req);
-  const user = userDatabase.getUserById(uid);
+  const user = userDB.getUserById(uid);
   const shortURL = req.params.shortURL;
-  const url = urlDatabase.getURL(shortURL);
+  const url = urlDB.getURL(shortURL);
 
   if (!uid || !user || !url || url.uid !== uid) {
-    onFalse(shortURL, url, uid, user);
+    onFalse(shortURL, url, user, uid);
     return;
   }
-  onTrue(shortURL, url, uid, user);
+  onTrue(shortURL, url, user, uid);
 };
 
 // --- GET ROUTES ---
@@ -86,7 +86,7 @@ app.get("/urls", (req, res) => {
   checkUserLoggedIn(req,
     (_, user) => res.render("no_access", { user }), //not logged in
     (uid, user) => {                         //logged in
-      const urls = urlDatabase.getURLsForUser(uid);
+      const urls = urlDB.getURLsForUser(uid);
       res.render("urls_index", { user, urls });
     });
 });
@@ -99,15 +99,15 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   checkUserOwnsURL(req,
-    (_, __, _0, user) => res.render("no_access", { user }), //does not own url
-    (shortURL, url, _, user) => {                           //owns url
+    (_, __, user) => res.render("no_access", { user }), //does not own url
+    (shortURL, url, user) => {
       const longURL = url.longURL;
-      res.render("urls_show", { user, shortURL, longURL });
+      res.render("urls_show", { user, shortURL, longURL })
     });
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const url = urlDatabase.getURL(req.params.shortURL);
+  const url = urlDB.getURL(req.params.shortURL);
 
   if (!url) { // (MINOR) return html instead
     return res.status(404).send("status 404: shortURL url does not exist");
@@ -123,16 +123,16 @@ app.post("/register", (req, res) => {
   if (!email || !password) { // (MINOR) return html instead
     return res.status(400).send("status 400: please enter an email and password");
   }
-  if (userDatabase.getUserByEmail(email)) { // (MINOR) return html instead
+  if (userDB.getUserByEmail(email)) { // (MINOR) return html instead
     return res.status(400).send("status 400: email already registered");
   }
-  const id = userDatabase.createNewUser(email, bcrypt.hashSync(password, 10));
+  const id = userDB.createNewUser(email, bcrypt.hashSync(password, 10));
   req.session.userId = id;  // set session cookie
   res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
-  const user = userDatabase.getUserByEmail(req.body.email);
+  const user = userDB.getUserByEmail(req.body.email);
   
   if (!user || !bcrypt.compareSync(req.body.password, user.password)) { // (MINOR) return html instead
     return res.status(403).send("status 403: authentication failed");
@@ -150,7 +150,7 @@ app.post("/urls", (req, res) => {
   checkUserLoggedIn(req,
     () => res.redirect('/urls'), //not logged in
     (uid) => {                   //logged in
-      const shortURL = urlDatabase.createNewURL(uid, req.body.longURL);
+      const shortURL = urlDB.createNewURL(uid, req.body.longURL);
       res.redirect(`/urls/${shortURL}`);
     });
 });
@@ -158,8 +158,8 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:shortURL", (req, res) => {
   checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
-    (shortURL, url) => {    
-      urlDatabase.editURL(shortURL, req.body.longURL);                        //owns url
+    (shortURL) => {    
+      urlDB.editURL(shortURL, req.body.longURL);                        //owns url
       res.redirect(`/urls/${shortURL}`);
     });
 });
@@ -168,7 +168,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
   checkUserOwnsURL(req,
     (shortURL) => res.redirect(`/urls/${shortURL}`), //does not own url
     (shortURL) => {                                  //owns url
-      urlDatabase.deleteURL(shortURL);
+      urlDB.deleteURL(shortURL);
       res.redirect("/urls");
     });
 });

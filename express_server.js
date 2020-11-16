@@ -86,11 +86,8 @@ app.get("/urls", (req, res) => {
   checkUserLoggedIn(req,
     () => res.render("no_access", { user }), //not logged in
     (uid, user) => {                         //logged in
-      const templateVars = {
-        user,
-        urls: getUrlsForUser(uid, urlDatabase),
-      };
-      res.render("urls_index", templateVars);
+      const urls = getUrlsForUser(uid, urlDatabase);
+      res.render("urls_index", { user, urls });
     });
 });
 
@@ -104,12 +101,8 @@ app.get("/urls/:shortURL", (req, res) => {
   checkUserOwnsURL(req,
     (_, __, _0, user) => res.render("no_access", { user }), //does not own url
     (shortURL, url, _, user) => {                           //owns url
-      const templateVars = {
-        user,
-        shortURL,
-        longURL: url.longURL,
-      };
-      res.render("urls_show", templateVars);
+      const longURL = url.longURL;
+      res.render("urls_show", { user, shortURL, longURL });
     });
 });
 

@@ -6,12 +6,12 @@ const prependHttpToURL = (url) => {
   const httpPrefix = 'http://';
   const httpsPrefix = 'https://';
   if (
-    url.substr(0, httpPrefix.length).toLowerCase() !== httpPrefix
-    || url.substr(0, httpsPrefix.length).toLowerCase() !== httpsPrefix)
+    url.substr(0, httpPrefix.length).toLowerCase() === httpPrefix
+    || url.substr(0, httpsPrefix.length).toLowerCase() === httpsPrefix)
   {
-    return httpPrefix + url;
+    return url;
   }
-  return url;
+  return httpPrefix + url;
 };
 
 /**

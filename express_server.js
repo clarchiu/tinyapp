@@ -84,7 +84,7 @@ app.get("/login", (req, res) => {
 // (STRETCH) the date created, number of visits, number of unique visits
 app.get("/urls", (req, res) => {
   checkUserLoggedIn(req,
-    () => res.render("no_access", { user }), //not logged in
+    (_, user) => res.render("no_access", { user }), //not logged in
     (uid, user) => {                         //logged in
       const urls = getUrlsForUser(uid, urlDatabase);
       res.render("urls_index", { user, urls });
